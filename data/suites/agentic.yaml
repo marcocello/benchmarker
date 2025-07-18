@@ -1,0 +1,71 @@
+suite:
+  name: "Simple Q&A Benchmark"
+  description: "Configuration for running simple Q&A benchmark with Azure OpenAI"
+
+  # Test dataset
+  dataset: "data/datasets/simple_qa.yaml"
+
+  scenarios:
+    - name: "qa_test_azure_oneshot"
+      strategy: "direct_prompt"
+      provider: "azure_openai"
+    
+    - name: "qa_test_azure_agentic"
+      strategy: "agentic"
+      provider: "azure_openai"
+      agents:
+        - name: "researcher"
+          role: "Research Specialist"
+          goal: "Find accurate and comprehensive information to answer the question"
+          backstory: "You are an expert researcher with access to vast knowledge. Your job is to gather relevant facts and information."
+          instructions: "Research the question thoroughly and provide factual information with high confidence."
+        - name: "analyzer"
+          role: "Information Analyst"
+          goal: "Analyze and verify the information provided by the researcher"
+          backstory: "You are a critical thinker who specializes in fact-checking and information validation."
+          instructions: "Review the research findings, check for accuracy, and identify any gaps or inconsistencies"
+        - name: "synthesizer"
+          role: "Answer Synthesizer"
+          goal: "Create a clear, concise, and accurate final answer"
+          backstory: "You are a communication expert who excels at creating clear, well-structured responses."
+          instructions: "Synthesize the research and analysis into a clear, concise, and accurate final answer."
+      task_template: "Question to answer: {question}"
+
+  # Scoring configuration
+  scoring:
+    name: "scoring judge"
+    strategy: "llm_judge"
+    provider: "azure_openai"
+    max_score: 10
+    prompt: |
+      You are evaluating the quality of an answer to a factual question.
+      
+      Question: {question}
+      Expected Answer: {expected_answer}
+      Actual Answer: {response}
+      
+      Rate the answer on a scale of 0-10 where:
+      - 10: Perfect, accurate answer
+      - 8-9: Mostly correct with minor issues
+      - 6-7: Partially correct
+      - 4-5: Some relevant information but mostly incorrect
+      - 0-3: Completely wrong or irrelevant
+      
+      Respond with a JSON object containing 'score' (number) and 'explanation' (string).
+    scoring:
+      - "Factual accuracy"
+      - "Completeness of answer"
+      - "Clarity and coherence"
+
+  # Output settings
+  output:
+    path: data/results/qa_evaluation1.json
+
+  providers:
+    azure_openai:
+      type: azure_openai
+      endpoint: ${ENDPOINT}
+      api_version: ${API_VERSION}
+      api_key: ${API_KEY}
+      deployment: ${DEPLOYMENT}
+      model: ${MODEL}

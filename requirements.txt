@@ -1,0 +1,27 @@
+# Benchmarker - LLM Benchmarking Tool Requirements
+# Updated: 2025-07-18
+# Python: >=3.8 (tested with 3.13)
+#
+# Version constraints are kept loose to allow flexibility while ensuring compatibility.
+# Major version constraints prevent breaking changes.
+
+# Core CLI and utility dependencies
+typer[all]>=0.9.0,<1.0        # CLI framework with rich integration
+rich>=13.0.0                  # Terminal formatting and output
+colorlog>=6.0.0               # Colored logging output
+
+# Configuration and data handling
+pydantic>=2.5.0,<3.0          # Data validation and settings management
+pyyaml>=6.0.0                 # YAML configuration file parsing
+
+# Async support and utilities
+anyio>=4.0.0                  # Async compatibility layer
+python-dotenv>=1.0.0          # Environment variable loading
+
+# LLM framework dependencies
+langchain>=0.3.0,<1.0         # LLM framework for prompt management
+langchain-core>=0.3.0,<1.0    # Core LangChain functionality
+langchain-openai>=0.3.0,<1.0  # OpenAI integration for LangChain
+
+# Multi-agent framework
+crewai>=0.140.0               # Multi-agent orchestration system
