@@ -1,0 +1,17 @@
+dataset:
+  name: "Simple Q&A Dataset"
+  description: "Basic factual questions for capability assessment"
+  version: "1.0"
+  
+  questions:
+    - id: "geo_001"
+      prompt: "What is the capital of France?"
+      expected: "Paris"
+      category: "geography"
+      difficulty: "easy"
+      
+    - id: "sci_001"
+      prompt: "What is the chemical symbol for gold?"
+      expected: "Au"
+      category: "science"
+      difficulty: "easy"
