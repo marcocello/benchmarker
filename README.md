@@ -59,7 +59,7 @@ suite:
   name: "Simple Q&A Benchmark"
   description: "Configuration for running simple Q&A benchmark with Azure OpenAI"
 
-  dataset: "datasets/basic.yaml"
+  dataset: "data/datasets/basic.yaml"
 
   scenarios:
     - name: "qa_test_azure_oneshot"
@@ -92,26 +92,21 @@ suite:
       - "Clarity and coherence"
 
   output:
-    path: "results/qa_evaluation.json"
-    include_traces: true
-    include_scores: true
+    path: "data/results/qa_evaluation.json"
 
   providers:
     azure_openai:
-      type: "azure_openai"
-      endpoint: "https://scaleuplabs.openai.azure.com/"
-      api_version: "2024-02-15-preview"
-      api_key: "YOUR_API_KEY"  # Replace with env var or secure value
-      deployment: "gpt-4o-mini"
-      model: "gpt-4o-mini"
-      defaults:
-        temperature: 0.1
-        max_tokens: 100
+      type: azure_openai
+      endpoint: ${ENDPOINT}
+      api_version: ${API_VERSION}
+      api_key: ${API_KEY}
+      deployment: ${DEPLOYMENT}
+      model: ${MODEL}
 ```
 
 ```bash
 # Edit the dataset file
-nano datasets/basic.yaml
+nano data/datasets/basic.yaml
 ```
 
 ```yaml
@@ -141,7 +136,7 @@ python -m app run data/suites/basic.yaml
 ```
 
 ### 4. View the results
-- Results will be saved to `results/qa_evaluation.json`
+- Results will be saved to `data/results/qa_evaluation.json`
 - Console will display a summary table with scores, latency, and status
 
 ## How to Contribute
@@ -155,12 +150,9 @@ We welcome contributions from the community! To get started:
 
 If you’re not sure where to start, check out our Issues page.
 
-⸻
-
 ## Next Steps
 
 Here’s a preview of what’s coming next — or areas where you can contribute:
-	•	📋 Improve logging: Add structured logs, debug flags, and error tracebacks
 	•	🤖 AutoGen support: Add native support for AutoGen-style multi-agent evaluation
 	•	🧠 Include larger & SOTA datasets: Add benchmarks like GSM8K, ARC, MMLU
 	•	📚 Support RAG benchmarks: Benchmark retrieval-augmented pipelines via synthetic queries or hybrid eval
