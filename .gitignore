@@ -1,0 +1,23 @@
+## From https://jasonstitt.com/gitignore-whitelisting-patterns
+
+# 1. Ignore everything
+*
+
+# 2. But descend into directories
+!*/
+
+# 3. Allow specific files and file extensions
+!.gitignore
+!requirements.txt
+!*.py
+!*.md
+!*.png
+!*.yml
+!*.yaml
+!*.env.example
+
+# 4. Block some directories and files
+*.git
+**/*env
+**/.venv
+**/TMP
