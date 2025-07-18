@@ -1,6 +1,4 @@
-<div style="max-width: 200px;">
-  <img src="./logo.png" alt="Benchmarker Logo" />
-</div>
+<img src="./logo.png" width=50% height=50%>
 
 # Benchmarker
 
