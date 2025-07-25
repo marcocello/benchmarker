@@ -45,7 +45,7 @@ class ScoringConfig(BaseModel):
 
 class OutputConfig(BaseModel):
     """Output configuration."""
-    path: str
+    name: str
 
 
 class SuiteConfig(BaseModel):

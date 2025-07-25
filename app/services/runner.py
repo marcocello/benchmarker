@@ -4,6 +4,7 @@ import asyncio
 import json
 import logging
 import time
+import uuid
 from pathlib import Path
 from typing import Any, Dict, List
 
@@ -234,6 +235,18 @@ class SuiteRunner:
             logger.error(f"Error generating scoring response: {e}")
             return '{"score": 0, "explanation": "Error in scoring"}'
     
+    def _get_suite_folder_name(self, suite_name: str) -> str:
+        """Convert suite name to a folder-friendly format (lowercase, spaces/special chars to underscores) with short UUID."""
+        import re
+        # Convert to lowercase and replace spaces and special characters with underscores
+        folder_name = re.sub(r'[^\w\s-]', '', suite_name.lower())  # Remove special chars except spaces and hyphens
+        folder_name = re.sub(r'[-\s]+', '_', folder_name)  # Replace spaces and hyphens with underscores
+        folder_name = folder_name.strip('_')  # Remove leading/trailing underscores
+        
+        # Add short UUID (first 8 characters)
+        short_uuid = str(uuid.uuid4())[:8]
+        return f"{folder_name}_{short_uuid}"
+    
     def _report(self, results: List[Dict[str, Any]]) -> None:
         """Generate and display the suite results report."""
         if not results:
@@ -269,12 +282,18 @@ class SuiteRunner:
         
         # Save results to file
         suite_config = self.suite.suite
-        output_path = suite_config.output.path
+        output_filename = suite_config.output.name
         
-        output_file = Path(output_path)
-        output_file.parent.mkdir(parents=True, exist_ok=True)
+        # Create suite-specific folder structure with UUID
+        suite_folder_name = self._get_suite_folder_name(suite_config.name)
         
-        with open(output_file, "w", encoding="utf-8") as f:
+        # Construct the full path: data/results/suite_folder/filename
+        base_dir = Path("data/results")
+        new_path = base_dir / suite_folder_name / output_filename
+        
+        new_path.parent.mkdir(parents=True, exist_ok=True)
+        
+        with open(new_path, "w", encoding="utf-8") as f:
             json.dump(results, f, indent=2, default=str)
         
-        self.console.print(f"\n[dim]Results saved to {output_file}[/dim]")
+        self.console.print(f"\n[dim]Results saved to {new_path}[/dim]")
