@@ -1,16 +1,16 @@
 suite:
   name: "Simple Q&A Benchmark"
-  description: "Configuration for running simple Q&A benchmark with Azure OpenAI"
+  description: "Configuration for running simple Q&A benchmark"
 
   # Test dataset
   dataset: "data/datasets/simple_qa.yaml"
 
   scenarios:
-    - name: "qa_test_azure_oneshot"
+    - name: "Direct prompting strategy"
       strategy: "direct_prompt"
       provider: "azure_openai"
     
-    - name: "qa_test_azure_agentic"
+    - name: "Agentic strategy"
       strategy: "agentic"
       provider: "azure_openai"
       agents:
@@ -24,11 +24,6 @@ suite:
           goal: "Analyze and verify the information provided by the researcher"
           backstory: "You are a critical thinker who specializes in fact-checking and information validation."
           instructions: "Review the research findings, check for accuracy, and identify any gaps or inconsistencies"
-        - name: "synthesizer"
-          role: "Answer Synthesizer"
-          goal: "Create a clear, concise, and accurate final answer"
-          backstory: "You are a communication expert who excels at creating clear, well-structured responses."
-          instructions: "Synthesize the research and analysis into a clear, concise, and accurate final answer."
       task_template: "Question to answer: {question}"
 
   # Scoring configuration
@@ -59,7 +54,7 @@ suite:
 
   # Output settings
   output:
-    path: data/results/qa_evaluation1.json
+    name: qa_evaluation1.json
 
   providers:
     azure_openai:

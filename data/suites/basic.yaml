@@ -38,7 +38,7 @@ suite:
 
   # Output settings
   output:
-    path: data/results/qa_evaluation1.json
+    name: marco.json
 
   providers:
     azure_openai:
