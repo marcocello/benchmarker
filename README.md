@@ -10,8 +10,9 @@ Benchmarker is a Python-based command-line tool that:
 - Runs model **scenarios** using configurable **strategies**  
 - Scores model responses using a judge model or logic-based scorer  
 - Generates rich output reports and saves detailed traces  
+- **NEW**: Supports image OCR and handwriting recognition testing
 
-Built with modularity in mind, Benchmarker supports multiple providers, models, scoring strategies, and prompt styles — making it a flexible backbone for comparative LLM evaluations.
+Built with modularity in mind, Benchmarker supports multiple providers, models, scoring strategies, prompt styles, and now **multimodal capabilities** — making it a flexible backbone for comprehensive LLM evaluations.
 
 ## 💡 Why?
 
@@ -30,24 +31,25 @@ There wasn’t a simple way to experiment systematically, measure tradeoffs, and
 
 So I built Benchmarker.
 
-## ⚙️ Usage
+## ⚙️ Setup
 
-### 1. Setup your environment
+### VS Code Dev Container Setup (Recommended)
 
-```bash
-# Clone the repository
-git clone https://github.com/your-org/benchmarker.git
-cd benchmarker
+The easiest way to get started with all dependencies pre-configured:
 
-# Create virtual environment
-python3 -m venv .venv
-source .venv/bin/activate  # On Windows use `.venv\Scripts\activate`
+1. **Open in VS Code**: Clone the repository and open it in VS Code
+2. **Open as Dev Container**: When prompted, select "Reopen in Container" - this will automatically build a Docker environment with all dependencies including Python, poppler for PDF processing, and all required libraries
+3. **Configure credentials**: Copy the environment template and add your API credentials
+   ```bash
+   cp .env.template .env
+   # Edit .env with your actual Azure OpenAI credentials
+   ```
 
-# Install dependencies
-pip install -e .
-```
+That's it! The dev container handles all the setup automatically.
 
-### 2. Edit your suite and dataset files
+## ⚙️ Run
+
+### 1. Edit the suite (Q&A suite)
 
 ```bash
 # Edit the suite file
@@ -129,13 +131,13 @@ dataset:
       difficulty: "easy"
 ```
 
-### 3. Run the benchmark
+### 2. Run the benchmark
 
 ```bash
 python -m app run data/suites/basic.yaml
 ```
 
-### 4. View the results
+### 3. View the results
 - Results will be saved to `data/results/qa_evaluation.json`
 - Console will display a summary table with scores, latency, and status
 
@@ -152,11 +154,11 @@ If you’re not sure where to start, check out our Issues page.
 
 ## Next Steps
 
-Here’s a preview of what’s coming next — or areas where you can contribute:
-	•	🤖 AutoGen support: Add native support for AutoGen-style multi-agent evaluation
-	•	🧠 Include larger & SOTA datasets: Add benchmarks like GSM8K, ARC, MMLU
-	•	📚 Support RAG benchmarks: Benchmark retrieval-augmented pipelines via synthetic queries or hybrid eval
-	•	🔧 Fine-tuning integration: Evaluate checkpoints pre/post fine-tuning on key tasks
+Here’s a preview of what’s coming next or areas where you can contribute:
+ - 🤖 AutoGen support: Add native support for AutoGen-style multi-agent evaluation
+ - 🧠 Include larger & SOTA datasets: Add benchmarks like GSM8K, ARC, MMLU
+ - 📚 Support RAG benchmarks: Benchmark retrieval-augmented pipelines via synthetic queries or hybrid eval
+ - 🔧 Fine-tuning integration: Evaluate checkpoints pre/post fine-tuning on key tasks
 
 Want to lead one of these features? Open an issue or propose a draft!
 
