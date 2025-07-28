@@ -29,6 +29,7 @@ class ScenarioConfig(BaseModel):
     name: str
     strategy: str
     provider: str
+    prompt_path: Optional[str] = None
     agents: Optional[List[AgentConfig]] = None
     task_template: Optional[str] = None
 
@@ -54,7 +55,7 @@ class SuiteConfig(BaseModel):
     description: Optional[str] = None
     dataset: str
     scenarios: List[ScenarioConfig]
-    scoring: ScoringConfig
+    scoring: Optional[ScoringConfig] = None
     output: OutputConfig
     providers: Dict[str, ProviderConfig]
 
