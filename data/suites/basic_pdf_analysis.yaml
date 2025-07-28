@@ -1,0 +1,23 @@
+suite:
+  name: "Simple PDF Extraction"
+  description: "Configuration for running a PDF extraction with Azure OpenAI"
+
+  # Test dataset
+  dataset: "data/datasets/basic_pdfs"
+
+  scenarios:
+    - name: "basic_pdf_extraction"
+      strategy: "advanced_pdf"
+      provider: "azure_openai"
+      prompt_path: "prompts/basic.txt"
+  output:
+    name: basic_pdf
+
+  providers:
+    azure_openai:
+      type: azure_openai
+      endpoint: ${ENDPOINT}
+      api_version: ${API_VERSION}
+      api_key: ${API_KEY}
+      deployment: ${DEPLOYMENT}
+      model: ${MODEL}

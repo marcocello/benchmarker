@@ -1,0 +1,4 @@
+Extraction Prompt
+Rules
+
+Extract the text
