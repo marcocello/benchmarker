@@ -25,3 +25,7 @@ langchain-openai>=0.3.0,<1.0  # OpenAI integration for LangChain
 
 # Multi-agent framework
 crewai>=0.140.0               # Multi-agent orchestration system
+
+# Image and PDF processing dependencies
+pdf2image>=1.16.0             # PDF to image conversion for advanced processing
+pillow>=10.0.0                # Python Imaging Library for image handling
