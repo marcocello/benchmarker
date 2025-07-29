@@ -12,7 +12,6 @@ from pathlib import Path
 from PIL import Image
 import io
 
-import openai
 from langchain_core.messages import HumanMessage
 from langchain_openai import AzureChatOpenAI
 from crewai import Agent, Task, Crew
@@ -36,6 +35,17 @@ class Strategy(ABC):
 class DirectPromptStrategy(Strategy):
     """Strategy for direct prompting using LangChain."""
     
+    def get_token_usage(self, response) -> Dict[str, int]:
+        """Extract token usage from LangChain response"""
+        usage_metadata = getattr(response, 'response_metadata', {})
+        token_usage = usage_metadata.get('token_usage', {})
+        
+        return {
+            "input_tokens": token_usage.get('prompt_tokens', 0),
+            "output_tokens": token_usage.get('completion_tokens', 0),
+            "total_tokens": token_usage.get('total_tokens', 0)
+        }
+    
     async def execute(self, prompt: str, **kwargs) -> str:
         """Execute direct prompt strategy using LangChain."""
         try:
@@ -55,6 +65,10 @@ class DirectPromptStrategy(Strategy):
                 messages = [HumanMessage(content=prompt)]
                 response = await llm.ainvoke(messages)
                 
+                # Log token usage
+                token_usage = self.get_token_usage(response)
+                logger.info(f"Direct prompt token usage: {token_usage}")
+                
                 return response.content
             else:
                 # Fallback for unsupported provider types
@@ -67,6 +81,17 @@ class DirectPromptStrategy(Strategy):
 
 class LLMJudgeStrategy(Strategy):
     """Strategy for LLM-based scoring using LangChain."""
+    
+    def get_token_usage(self, response) -> Dict[str, int]:
+        """Extract token usage from LangChain response"""
+        usage_metadata = getattr(response, 'response_metadata', {})
+        token_usage = usage_metadata.get('token_usage', {})
+        
+        return {
+            "input_tokens": token_usage.get('prompt_tokens', 0),
+            "output_tokens": token_usage.get('completion_tokens', 0),
+            "total_tokens": token_usage.get('total_tokens', 0)
+        }
     
     async def execute(self, prompt: str, **kwargs) -> str:
         """Execute LLM judge strategy using LangChain."""
@@ -87,6 +112,10 @@ class LLMJudgeStrategy(Strategy):
                 messages = [HumanMessage(content=prompt)]
                 response = await llm.ainvoke(messages)
                 
+                # Log token usage
+                token_usage = self.get_token_usage(response)
+                logger.info(f"LLM judge token usage: {token_usage}")
+                
                 return response.content
             else:
                 # Fallback for unsupported provider types
@@ -102,32 +131,16 @@ class AdvancedPDFStrategy(Strategy):
     
     def __init__(self, provider_settings: Dict[str, Any]):
         super().__init__(provider_settings)
-        # Pricing information for cost tracking
-        self.pricing = {
-            "gpt-4-vision-preview": {
-                "input_tokens": 0.01,  # $0.01 per 1K tokens
-                "output_tokens": 0.03  # $0.03 per 1K tokens
-            },
-            "gpt-4o": {
-                "input_tokens": 0.005,  # $0.005 per 1K tokens  
-                "output_tokens": 0.015  # $0.015 per 1K tokens
-            }
-        }
     
-    def calculate_cost(self, input_tokens: int, output_tokens: int, model: str = "gpt-4o") -> Dict[str, float]:
-        """Calculate cost for API call based on token usage"""
-        model_pricing = self.pricing.get(model, self.pricing["gpt-4o"])
-        
-        input_cost = (input_tokens / 1000) * model_pricing["input_tokens"]
-        output_cost = (output_tokens / 1000) * model_pricing["output_tokens"]
-        total_cost = input_cost + output_cost
+    def get_token_usage(self, response) -> Dict[str, int]:
+        """Extract token usage from LangChain response"""
+        usage_metadata = getattr(response, 'response_metadata', {})
+        token_usage = usage_metadata.get('token_usage', {})
         
         return {
-            "input_tokens": input_tokens,
-            "output_tokens": output_tokens,
-            "input_cost": round(input_cost, 6),
-            "output_cost": round(output_cost, 6),
-            "total_cost": round(total_cost, 6)
+            "input_tokens": token_usage.get('prompt_tokens', 0),
+            "output_tokens": token_usage.get('completion_tokens', 0),
+            "total_tokens": token_usage.get('total_tokens', 0)
         }
     
     def preprocess_image_for_llm(self, image: Image.Image) -> Image.Image:
@@ -158,7 +171,7 @@ class AdvancedPDFStrategy(Strategy):
         return base64.b64encode(buffered.getvalue()).decode()
     
     async def process_pdf_with_vision(self, pdf_path: str, prompt: str, task_type: str = None, max_retries: int = 3) -> Dict[str, Any]:
-        """Process PDF using vision model with retry logic and cost tracking"""
+        """Process PDF using vision model with retry logic and token tracking"""
         
         for attempt in range(max_retries):
             try:
@@ -178,7 +191,8 @@ class AdvancedPDFStrategy(Strategy):
                 
                 # Process each page
                 all_pages_data = []
-                total_cost = 0
+                total_input_tokens = 0
+                total_output_tokens = 0
                 
                 for page_num, image in enumerate(images, 1):
                     logger.debug(f"Processing page {page_num}/{len(images)}")
@@ -187,19 +201,7 @@ class AdvancedPDFStrategy(Strategy):
                     processed_image = self.preprocess_image_for_llm(image)
                     image_base64 = self.encode_image_to_base64(processed_image)
                     
-                    # Create message content using only the provided prompt
-                    message_content = [
-                        {"type": "text", "text": prompt},
-                        {
-                            "type": "image_url",
-                            "image_url": {
-                                "url": f"data:image/png;base64,{image_base64}",
-                                "detail": "high"
-                            }
-                        }
-                    ]
-                    
-                    # Set up Azure OpenAI client
+                    # Set up Azure OpenAI client using LangChain
                     if self.provider_settings.api_type == 'azure_openai':
                         llm = AzureChatOpenAI(
                             azure_endpoint=self.provider_settings.api_base,
@@ -211,31 +213,38 @@ class AdvancedPDFStrategy(Strategy):
                             max_tokens=self.provider_settings.default_parameters.get('max_tokens', 2000)
                         )
                         
-                        # Use the direct OpenAI client for usage tracking
-                        client = openai.AzureOpenAI(
-                            azure_endpoint=self.provider_settings.api_base,
-                            api_key=self.provider_settings.api_key,
-                            api_version=self.provider_settings.api_version
+                        # Create message for vision processing
+                        # Convert the message content to HumanMessage format
+                        text_content = prompt
+                        image_url = f"data:image/png;base64,{image_base64}"
+                        
+                        # Create HumanMessage with vision content
+                        message = HumanMessage(
+                            content=[
+                                {"type": "text", "text": text_content},
+                                {
+                                    "type": "image_url",
+                                    "image_url": {
+                                        "url": image_url,
+                                        "detail": "high"
+                                    }
+                                }
+                            ]
                         )
                         
-                        # Make API request to get usage info
-                        response = client.chat.completions.create(
-                            model=self.provider_settings.deployment,
-                            messages=[{"role": "user", "content": message_content}],
-                            temperature=self.provider_settings.default_parameters.get('temperature', 0.1),
-                            max_tokens=self.provider_settings.default_parameters.get('max_tokens', 2000)
-                        )
+                        # Make API request using LangChain
+                        response = await llm.ainvoke([message])
+                        content = response.content
                         
-                        content = response.choices[0].message.content
+                        # Get token usage information
+                        token_usage = self.get_token_usage(response)
+                        input_tokens = token_usage["input_tokens"]
+                        output_tokens = token_usage["output_tokens"]
+                        total_input_tokens += input_tokens
+                        total_output_tokens += output_tokens
                         
-                        # Extract usage information for cost calculation
-                        usage = response.usage
-                        input_tokens = usage.prompt_tokens if usage else 0
-                        output_tokens = usage.completion_tokens if usage else 0
-                        
-                        # Calculate cost
-                        cost_info = self.calculate_cost(input_tokens, output_tokens, self.provider_settings.deployment)
-                        total_cost += cost_info["total_cost"]
+                        # Log token usage for this page
+                        logger.info(f"Page {page_num} token usage: {token_usage}")
                         
                         # Parse JSON response
                         try:
@@ -255,7 +264,7 @@ class AdvancedPDFStrategy(Strategy):
                         page_result = {
                             "page_number": page_num,
                             "extracted_data": extracted_data,
-                            "cost_info": cost_info,
+                            "token_usage": token_usage,
                             "processing_time": time.time()
                         }
                         
@@ -265,7 +274,7 @@ class AdvancedPDFStrategy(Strategy):
                         return {"error": f"Provider type '{self.provider_settings.api_type}' not supported for advanced PDF processing"}
                 
                 # Combine data from all pages
-                combined_result = self._combine_page_data(all_pages_data, pdf_path, total_cost)
+                combined_result = self._combine_page_data(all_pages_data, pdf_path, total_input_tokens, total_output_tokens)
                 return combined_result
                 
             except Exception as e:
@@ -280,14 +289,21 @@ class AdvancedPDFStrategy(Strategy):
         
         return {"error": "Max retries exceeded"}
     
-    def _combine_page_data(self, pages_data: List[Dict], pdf_path: str, total_cost: float) -> Dict[str, Any]:
+    def _combine_page_data(self, pages_data: List[Dict], pdf_path: str, total_input_tokens: int, total_output_tokens: int) -> Dict[str, Any]:
         """Combine extracted data from all PDF pages into a unified structure"""
         
         combined_data = {
             "pdf_file": Path(pdf_path).name,
             "total_pages": len(pages_data),
-            "total_cost": round(total_cost, 6),
-            "cost_per_page": round(total_cost / len(pages_data), 6) if len(pages_data) > 0 else 0,
+            "total_token_usage": {
+                "input_tokens": total_input_tokens,
+                "output_tokens": total_output_tokens,
+                "total_tokens": total_input_tokens + total_output_tokens
+            },
+            "average_tokens_per_page": {
+                "input_tokens": total_input_tokens // len(pages_data) if len(pages_data) > 0 else 0,
+                "output_tokens": total_output_tokens // len(pages_data) if len(pages_data) > 0 else 0
+            },
             "pages": pages_data,
             "summary": {
                 "document_info": {},
@@ -359,6 +375,17 @@ class AdvancedPDFStrategy(Strategy):
 class AgenticStrategy(Strategy):
     """Strategy for agentic execution using CrewAI."""
     
+    def get_token_usage(self, response=None) -> Dict[str, int]:
+        """Extract token usage - CrewAI may not provide detailed token usage"""
+        # CrewAI doesn't always provide token usage in the same way
+        # This is a placeholder for potential future implementation
+        logger.info("Token usage tracking for CrewAI not fully implemented")
+        return {
+            "input_tokens": 0,
+            "output_tokens": 0,
+            "total_tokens": 0
+        }
+    
     async def execute(self, prompt: str, **kwargs) -> str:
         """Execute agentic strategy using CrewAI."""
         try:
@@ -380,7 +407,13 @@ class AgenticStrategy(Strategy):
                 )
                 
                 # Run CrewAI synchronously and return the result
-                return self._run_crew_sync(llm, prompt, scenario_config)
+                result = self._run_crew_sync(llm, prompt, scenario_config)
+                
+                # Log token usage (placeholder)
+                token_usage = self.get_token_usage()
+                logger.info(f"Agentic strategy token usage: {token_usage}")
+                
+                return result
                     
             else:
                 # Fallback for unsupported provider types
