@@ -14,6 +14,7 @@ import io
 
 from langchain_core.messages import HumanMessage
 from langchain_openai import AzureChatOpenAI
+from langchain_anthropic import ChatAnthropic
 from crewai import Agent, Task, Crew
 from crewai.llm import LLM
 
@@ -49,7 +50,7 @@ class DirectPromptStrategy(Strategy):
     async def execute(self, prompt: str, **kwargs) -> str:
         """Execute direct prompt strategy using LangChain."""
         try:
-            # Set up LangChain Azure OpenAI client
+            # Set up LangChain client based on provider type
             if self.provider_settings.api_type == 'azure_openai':
                 llm = AzureChatOpenAI(
                     azure_endpoint=self.provider_settings.api_base,
@@ -60,19 +61,26 @@ class DirectPromptStrategy(Strategy):
                     temperature=self.provider_settings.default_parameters.get('temperature', 0.1),
                     max_tokens=self.provider_settings.default_parameters.get('max_tokens', 100)
                 )
-                
-                # Create message and get response
-                messages = [HumanMessage(content=prompt)]
-                response = await llm.ainvoke(messages)
-                
-                # Log token usage
-                token_usage = self.get_token_usage(response)
-                logger.info(f"Direct prompt token usage: {token_usage}")
-                
-                return response.content
+            elif self.provider_settings.api_type == 'anthropic':
+                llm = ChatAnthropic(
+                    model=self.provider_settings.default_model,
+                    api_key=self.provider_settings.api_key,
+                    temperature=self.provider_settings.default_parameters.get('temperature', 0.1),
+                    max_tokens=self.provider_settings.default_parameters.get('max_tokens', 100)
+                )
             else:
                 # Fallback for unsupported provider types
                 return f"Error: Provider type '{self.provider_settings.api_type}' not supported"
+            
+            # Create message and get response
+            messages = [HumanMessage(content=prompt)]
+            response = await llm.ainvoke(messages)
+            
+            # Log token usage
+            token_usage = self.get_token_usage(response)
+            logger.info(f"Direct prompt token usage: {token_usage}")
+            
+            return response.content
                 
         except Exception as e:
             logger.error(f"Error in direct prompt strategy: {e}")
@@ -96,7 +104,7 @@ class LLMJudgeStrategy(Strategy):
     async def execute(self, prompt: str, **kwargs) -> str:
         """Execute LLM judge strategy using LangChain."""
         try:
-            # Set up LangChain Azure OpenAI client
+            # Set up LangChain client based on provider type
             if self.provider_settings.api_type == 'azure_openai':
                 llm = AzureChatOpenAI(
                     azure_endpoint=self.provider_settings.api_base,
@@ -107,19 +115,26 @@ class LLMJudgeStrategy(Strategy):
                     temperature=self.provider_settings.default_parameters.get('temperature', 0.1),
                     max_tokens=self.provider_settings.default_parameters.get('max_tokens', 100)
                 )
-                
-                # Create message and get response
-                messages = [HumanMessage(content=prompt)]
-                response = await llm.ainvoke(messages)
-                
-                # Log token usage
-                token_usage = self.get_token_usage(response)
-                logger.info(f"LLM judge token usage: {token_usage}")
-                
-                return response.content
+            elif self.provider_settings.api_type == 'anthropic':
+                llm = ChatAnthropic(
+                    model=self.provider_settings.default_model,
+                    api_key=self.provider_settings.api_key,
+                    temperature=self.provider_settings.default_parameters.get('temperature', 0.1),
+                    max_tokens=self.provider_settings.default_parameters.get('max_tokens', 100)
+                )
             else:
                 # Fallback for unsupported provider types
                 return f'{{"score": 0, "explanation": "Error: Provider type \'{self.provider_settings.api_type}\' not supported for scoring"}}'
+            
+            # Create message and get response
+            messages = [HumanMessage(content=prompt)]
+            response = await llm.ainvoke(messages)
+            
+            # Log token usage
+            token_usage = self.get_token_usage(response)
+            logger.info(f"LLM judge token usage: {token_usage}")
+            
+            return response.content
                 
         except Exception as e:
             logger.error(f"Error in LLM judge strategy: {e}")
@@ -201,7 +216,7 @@ class AdvancedPDFStrategy(Strategy):
                     processed_image = self.preprocess_image_for_llm(image)
                     image_base64 = self.encode_image_to_base64(processed_image)
                     
-                    # Set up Azure OpenAI client using LangChain
+                    # Set up LangChain client based on provider type
                     if self.provider_settings.api_type == 'azure_openai':
                         llm = AzureChatOpenAI(
                             azure_endpoint=self.provider_settings.api_base,
@@ -212,66 +227,72 @@ class AdvancedPDFStrategy(Strategy):
                             temperature=self.provider_settings.default_parameters.get('temperature', 0.1),
                             max_tokens=self.provider_settings.default_parameters.get('max_tokens', 2000)
                         )
-                        
-                        # Create message for vision processing
-                        # Convert the message content to HumanMessage format
-                        text_content = prompt
-                        image_url = f"data:image/png;base64,{image_base64}"
-                        
-                        # Create HumanMessage with vision content
-                        message = HumanMessage(
-                            content=[
-                                {"type": "text", "text": text_content},
-                                {
-                                    "type": "image_url",
-                                    "image_url": {
-                                        "url": image_url,
-                                        "detail": "high"
-                                    }
-                                }
-                            ]
+                    elif self.provider_settings.api_type == 'anthropic':
+                        llm = ChatAnthropic(
+                            model=self.provider_settings.default_model,
+                            api_key=self.provider_settings.api_key,
+                            temperature=self.provider_settings.default_parameters.get('temperature', 0.1),
+                            max_tokens=self.provider_settings.default_parameters.get('max_tokens', 2000)
                         )
-                        
-                        # Make API request using LangChain
-                        response = await llm.ainvoke([message])
-                        content = response.content
-                        
-                        # Get token usage information
-                        token_usage = self.get_token_usage(response)
-                        input_tokens = token_usage["input_tokens"]
-                        output_tokens = token_usage["output_tokens"]
-                        total_input_tokens += input_tokens
-                        total_output_tokens += output_tokens
-                        
-                        # Log token usage for this page
-                        logger.info(f"Page {page_num} token usage: {token_usage}")
-                        
-                        # Parse JSON response
-                        try:
-                            extracted_data = json.loads(content)
-                        except json.JSONDecodeError:
-                            # Try to extract JSON from the content
-                            import re
-                            json_match = re.search(r'\{.*\}', content, re.DOTALL)
-                            if json_match:
-                                try:
-                                    extracted_data = json.loads(json_match.group())
-                                except json.JSONDecodeError:
-                                    extracted_data = {"error": "Unable to parse JSON from response", "raw_content": content}
-                            else:
-                                extracted_data = {"error": "No JSON found in response", "raw_content": content}
-                        
-                        page_result = {
-                            "page_number": page_num,
-                            "extracted_data": extracted_data,
-                            "token_usage": token_usage,
-                            "processing_time": time.time()
-                        }
-                        
-                        all_pages_data.append(page_result)
-                    
                     else:
                         return {"error": f"Provider type '{self.provider_settings.api_type}' not supported for advanced PDF processing"}
+                    
+                    # Create message for vision processing
+                    # Convert the message content to HumanMessage format
+                    text_content = prompt
+                    image_url = f"data:image/png;base64,{image_base64}"
+                    
+                    # Create HumanMessage with vision content
+                    message = HumanMessage(
+                        content=[
+                            {"type": "text", "text": text_content},
+                            {
+                                "type": "image_url",
+                                "image_url": {
+                                    "url": image_url,
+                                    "detail": "high"
+                                }
+                            }
+                        ]
+                    )
+                    
+                    # Make API request using LangChain
+                    response = await llm.ainvoke([message])
+                    content = response.content
+                    
+                    # Get token usage information
+                    token_usage = self.get_token_usage(response)
+                    input_tokens = token_usage["input_tokens"]
+                    output_tokens = token_usage["output_tokens"]
+                    total_input_tokens += input_tokens
+                    total_output_tokens += output_tokens
+                    
+                    # Log token usage for this page
+                    logger.info(f"Page {page_num} token usage: {token_usage}")
+                    
+                    # Parse JSON response
+                    try:
+                        extracted_data = json.loads(content)
+                    except json.JSONDecodeError:
+                        # Try to extract JSON from the content
+                        import re
+                        json_match = re.search(r'\{.*\}', content, re.DOTALL)
+                        if json_match:
+                            try:
+                                extracted_data = json.loads(json_match.group())
+                            except json.JSONDecodeError:
+                                extracted_data = {"error": "Unable to parse JSON from response", "raw_content": content}
+                        else:
+                            extracted_data = {"error": "No JSON found in response", "raw_content": content}
+                    
+                    page_result = {
+                        "page_number": page_num,
+                        "extracted_data": extracted_data,
+                        "token_usage": token_usage,
+                        "processing_time": time.time()
+                    }
+                    
+                    all_pages_data.append(page_result)
                 
                 # Combine data from all pages
                 combined_result = self._combine_page_data(all_pages_data, pdf_path, total_input_tokens, total_output_tokens)
@@ -394,7 +415,7 @@ class AgenticStrategy(Strategy):
             if not scenario_config:
                 return "Error: No scenario configuration provided for agentic strategy"
                 
-            # Set up CrewAI LLM with Azure OpenAI
+            # Set up CrewAI LLM based on provider type
             if self.provider_settings.api_type == 'azure_openai':
                 # Configure LLM for Azure OpenAI
                 llm = LLM(
@@ -405,19 +426,26 @@ class AgenticStrategy(Strategy):
                     temperature=self.provider_settings.default_parameters.get('temperature', 0.1),
                     max_tokens=self.provider_settings.default_parameters.get('max_tokens', 100)
                 )
-                
-                # Run CrewAI synchronously and return the result
-                result = self._run_crew_sync(llm, prompt, scenario_config)
-                
-                # Log token usage (placeholder)
-                token_usage = self.get_token_usage()
-                logger.info(f"Agentic strategy token usage: {token_usage}")
-                
-                return result
-                    
+            elif self.provider_settings.api_type == 'anthropic':
+                # Configure LLM for Anthropic
+                llm = LLM(
+                    model=self.provider_settings.default_model,
+                    api_key=self.provider_settings.api_key,
+                    temperature=self.provider_settings.default_parameters.get('temperature', 0.1),
+                    max_tokens=self.provider_settings.default_parameters.get('max_tokens', 100)
+                )
             else:
                 # Fallback for unsupported provider types
                 return f"Error: Provider type '{self.provider_settings.api_type}' not supported"
+            
+            # Run CrewAI synchronously and return the result
+            result = self._run_crew_sync(llm, prompt, scenario_config)
+            
+            # Log token usage (placeholder)
+            token_usage = self.get_token_usage()
+            logger.info(f"Agentic strategy token usage: {token_usage}")
+            
+            return result
                 
         except Exception as e:
             logger.error(f"Error in agentic strategy: {e}")

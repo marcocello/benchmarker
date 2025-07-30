@@ -10,6 +10,7 @@ class ProviderConfig(BaseModel):
     endpoint: Optional[str] = None
     api_version: Optional[str] = None
     api_key: Optional[str] = None
+    api_key_env: Optional[str] = None
     deployment: Optional[str] = None
     model: Optional[str] = None
     defaults: Dict[str, Any] = Field(default_factory=dict)
