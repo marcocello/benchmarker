@@ -30,36 +30,49 @@ class ProviderSettings(BaseModel):
     deployment: Optional[str] = None
     default_model: str
     default_parameters: Dict[str, Any] = Field(default_factory=dict)
+    # OpenRouter specific fields
+    site_url: Optional[str] = None
+    site_name: Optional[str] = None
 
 
 def resolve_provider_credentials(provider_config: ProviderConfig) -> ProviderSettings:
     """Resolve provider configuration by loading API key from environment or config."""
     api_key = provider_config.api_key
-    if not api_key and provider_config.api_key_env:
+    if not api_key and getattr(provider_config, 'api_key_env', None):
         api_key = os.getenv(provider_config.api_key_env)
     
     if not api_key:
-        env_name = provider_config.api_key_env or f"{provider_config.type.upper()}_API_KEY"
+        env_name = getattr(provider_config, 'api_key_env', None) or f"{provider_config.type.upper()}_API_KEY"
         raise ValueError(f"API key not found. Set {env_name} environment variable or add api_key to config.")
     
     # Handle different endpoint field names
-    api_base = provider_config.endpoint
+    api_base = getattr(provider_config, 'endpoint', None)
+    
+    # For OpenRouter, set the default base URL
+    if provider_config.type == 'openrouter':
+        api_base = "https://openrouter.ai/api/v1"
     
     # Determine default model
     default_model = (
         provider_config.model or 
-        provider_config.deployment or 
+        getattr(provider_config, 'deployment', None) or 
         "gpt-3.5-turbo"
     )
+    
+    # Extract OpenRouter specific fields
+    site_url = getattr(provider_config, 'site_url', None)
+    site_name = getattr(provider_config, 'site_name', None)
     
     return ProviderSettings(
         api_key=api_key,
         api_type=provider_config.type,
         api_base=api_base,
-        api_version=provider_config.api_version,
-        deployment=provider_config.deployment,
+        api_version=getattr(provider_config, 'api_version', None),
+        deployment=getattr(provider_config, 'deployment', None),
         default_model=default_model,
         default_parameters=provider_config.defaults,
+        site_url=site_url,
+        site_name=site_name,
     )
 
 

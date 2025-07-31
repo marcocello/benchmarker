@@ -13,7 +13,7 @@ from PIL import Image
 import io
 
 from langchain_core.messages import HumanMessage
-from langchain_openai import AzureChatOpenAI
+from langchain_openai import AzureChatOpenAI, ChatOpenAI
 from langchain_anthropic import ChatAnthropic
 from langchain_huggingface import ChatHuggingFace, HuggingFaceEndpoint
 from crewai import Agent, Task, Crew
@@ -68,6 +68,24 @@ class DirectPromptStrategy(Strategy):
                     api_key=self.provider_settings.api_key,
                     temperature=self.provider_settings.default_parameters.get('temperature', 0.1),
                     max_tokens=self.provider_settings.default_parameters.get('max_tokens', 100)
+                )
+            elif self.provider_settings.api_type == 'openrouter':
+                # Use OpenAI-compatible client for OpenRouter
+                
+                # Prepare default headers for OpenRouter
+                default_headers = {}
+                if self.provider_settings.site_url:
+                    default_headers["HTTP-Referer"] = self.provider_settings.site_url
+                if self.provider_settings.site_name:
+                    default_headers["X-Title"] = self.provider_settings.site_name
+                
+                llm = ChatOpenAI(
+                    model=self.provider_settings.default_model,
+                    api_key=self.provider_settings.api_key,
+                    base_url=self.provider_settings.api_base,
+                    temperature=self.provider_settings.default_parameters.get('temperature', 0.1),
+                    max_tokens=self.provider_settings.default_parameters.get('max_tokens', 100),
+                    default_headers=default_headers
                 )
             elif self.provider_settings.api_type == 'huggingface':
                 endpoint = HuggingFaceEndpoint(
@@ -257,10 +275,28 @@ class AdvancedPDFStrategy(Strategy):
                             temperature=self.provider_settings.default_parameters.get('temperature', 0.1),
                             max_tokens=self.provider_settings.default_parameters.get('max_tokens', 2000)
                         )
+                    elif self.provider_settings.api_type == 'openrouter':
+                        # Use OpenAI-compatible client for OpenRouter vision
+                        
+                        # Prepare default headers for OpenRouter
+                        default_headers = {}
+                        if self.provider_settings.site_url:
+                            default_headers["HTTP-Referer"] = self.provider_settings.site_url
+                        if self.provider_settings.site_name:
+                            default_headers["X-Title"] = self.provider_settings.site_name
+                        
+                        llm = ChatOpenAI(
+                            model=self.provider_settings.default_model,
+                            api_key=self.provider_settings.api_key,
+                            base_url=self.provider_settings.api_base,
+                            temperature=self.provider_settings.default_parameters.get('temperature', 0.1),
+                            max_tokens=self.provider_settings.default_parameters.get('max_tokens', 2000),
+                            default_headers=default_headers
+                        )
                     elif self.provider_settings.api_type == 'huggingface':
                         # Most HuggingFace models don't support vision
                         # We'll return an error for now, but this could be extended for vision-capable models
-                        return {"error": "HuggingFace provider does not currently support vision/PDF processing. Use Azure OpenAI or Anthropic for advanced PDF analysis."}
+                        return {"error": "HuggingFace provider does not currently support vision/PDF processing. Use Azure OpenAI, Anthropic, or OpenRouter for advanced PDF analysis."}
                     else:
                         return {"error": f"Provider type '{self.provider_settings.api_type}' not supported for advanced PDF processing"}
                     
@@ -458,6 +494,15 @@ class AgenticStrategy(Strategy):
                 llm = LLM(
                     model=self.provider_settings.default_model,
                     api_key=self.provider_settings.api_key,
+                    temperature=self.provider_settings.default_parameters.get('temperature', 0.1),
+                    max_tokens=self.provider_settings.default_parameters.get('max_tokens', 100)
+                )
+            elif self.provider_settings.api_type == 'openrouter':
+                # Configure LLM for OpenRouter
+                llm = LLM(
+                    model=self.provider_settings.default_model,
+                    api_key=self.provider_settings.api_key,
+                    base_url=self.provider_settings.api_base,
                     temperature=self.provider_settings.default_parameters.get('temperature', 0.1),
                     max_tokens=self.provider_settings.default_parameters.get('max_tokens', 100)
                 )
