@@ -23,6 +23,7 @@ langchain>=0.3.0,<1.0         # LLM framework for prompt management
 langchain-core>=0.3.0,<1.0    # Core LangChain functionality
 langchain-openai>=0.3.0,<1.0  # OpenAI integration for LangChain
 langchain-anthropic>=0.3.0,<1.0  # Anthropic integration for LangChain
+langchain-huggingface>=0.3.0,<1.0  # HuggingFace integration for LangChain
 
 # Multi-agent framework
 crewai>=0.140.0               # Multi-agent orchestration system

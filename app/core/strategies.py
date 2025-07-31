@@ -15,6 +15,7 @@ import io
 from langchain_core.messages import HumanMessage
 from langchain_openai import AzureChatOpenAI
 from langchain_anthropic import ChatAnthropic
+from langchain_huggingface import ChatHuggingFace, HuggingFaceEndpoint
 from crewai import Agent, Task, Crew
 from crewai.llm import LLM
 
@@ -68,6 +69,17 @@ class DirectPromptStrategy(Strategy):
                     temperature=self.provider_settings.default_parameters.get('temperature', 0.1),
                     max_tokens=self.provider_settings.default_parameters.get('max_tokens', 100)
                 )
+            elif self.provider_settings.api_type == 'huggingface':
+                endpoint = HuggingFaceEndpoint(
+                    repo_id=self.provider_settings.default_model,
+                    task="text-generation",
+                    max_new_tokens=self.provider_settings.default_parameters.get('max_tokens', 512),
+                    do_sample=self.provider_settings.default_parameters.get('do_sample', False),
+                    repetition_penalty=self.provider_settings.default_parameters.get('repetition_penalty', 1.03),
+                    temperature=self.provider_settings.default_parameters.get('temperature', 0.1),
+                    huggingfacehub_api_token=self.provider_settings.api_key,
+                )
+                llm = ChatHuggingFace(llm=endpoint)
             else:
                 # Fallback for unsupported provider types
                 return f"Error: Provider type '{self.provider_settings.api_type}' not supported"
@@ -122,6 +134,17 @@ class LLMJudgeStrategy(Strategy):
                     temperature=self.provider_settings.default_parameters.get('temperature', 0.1),
                     max_tokens=self.provider_settings.default_parameters.get('max_tokens', 100)
                 )
+            elif self.provider_settings.api_type == 'huggingface':
+                endpoint = HuggingFaceEndpoint(
+                    repo_id=self.provider_settings.default_model,
+                    task="text-generation",
+                    max_new_tokens=self.provider_settings.default_parameters.get('max_tokens', 512),
+                    do_sample=self.provider_settings.default_parameters.get('do_sample', False),
+                    repetition_penalty=self.provider_settings.default_parameters.get('repetition_penalty', 1.03),
+                    temperature=self.provider_settings.default_parameters.get('temperature', 0.1),
+                    huggingfacehub_api_token=self.provider_settings.api_key,
+                )
+                llm = ChatHuggingFace(llm=endpoint)
             else:
                 # Fallback for unsupported provider types
                 return f'{{"score": 0, "explanation": "Error: Provider type \'{self.provider_settings.api_type}\' not supported for scoring"}}'
@@ -234,6 +257,10 @@ class AdvancedPDFStrategy(Strategy):
                             temperature=self.provider_settings.default_parameters.get('temperature', 0.1),
                             max_tokens=self.provider_settings.default_parameters.get('max_tokens', 2000)
                         )
+                    elif self.provider_settings.api_type == 'huggingface':
+                        # Most HuggingFace models don't support vision
+                        # We'll return an error for now, but this could be extended for vision-capable models
+                        return {"error": "HuggingFace provider does not currently support vision/PDF processing. Use Azure OpenAI or Anthropic for advanced PDF analysis."}
                     else:
                         return {"error": f"Provider type '{self.provider_settings.api_type}' not supported for advanced PDF processing"}
                     
@@ -428,6 +455,14 @@ class AgenticStrategy(Strategy):
                 )
             elif self.provider_settings.api_type == 'anthropic':
                 # Configure LLM for Anthropic
+                llm = LLM(
+                    model=self.provider_settings.default_model,
+                    api_key=self.provider_settings.api_key,
+                    temperature=self.provider_settings.default_parameters.get('temperature', 0.1),
+                    max_tokens=self.provider_settings.default_parameters.get('max_tokens', 100)
+                )
+            elif self.provider_settings.api_type == 'huggingface':
+                # Configure LLM for HuggingFace
                 llm = LLM(
                     model=self.provider_settings.default_model,
                     api_key=self.provider_settings.api_key,
