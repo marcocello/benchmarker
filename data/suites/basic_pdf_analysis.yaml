@@ -8,16 +8,16 @@ suite:
   scenarios:
     - name: "basic_pdf_extraction"
       strategy: "advanced_pdf"
-      provider: "azure_openai"
+      provider: "azure_openai_gpt_4o_mini"
       prompt_path: "prompts/basic.txt"
   output:
-    name: basic_pdf
+    name: result
 
   providers:
-    azure_openai:
+    azure_openai_gpt_4o_mini:
       type: azure_openai
-      endpoint: ${ENDPOINT}
-      api_version: ${API_VERSION}
-      api_key: ${API_KEY}
-      deployment: ${DEPLOYMENT}
-      model: ${MODEL}
+      endpoint: ${AZURE_OPENAI_ENDPOINT}
+      api_version: ${AZURE_OPENAI_API_VERSION}
+      api_key: ${AZURE_OPENAI_API_KEY}
+      deployment: gpt-4o-mini
+      model: gpt-4o-mini
