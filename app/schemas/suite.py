@@ -1,19 +1,45 @@
 """Pydantic schemas for suite and dataset validation."""
 
 from pydantic import BaseModel, Field
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, Union, Literal, Annotated
 
 
-class ProviderConfig(BaseModel):
-    """Configuration for a model provider."""
-    type: str
-    endpoint: Optional[str] = None
-    api_version: Optional[str] = None
+class AzureOpenAIProviderConfig(BaseModel):
+    """Configuration for Azure OpenAI provider."""
+    type: Literal["azure_openai"]
     api_key: Optional[str] = None
-    api_key_env: Optional[str] = None
-    deployment: Optional[str] = None
-    model: Optional[str] = None
+    endpoint: str
+    api_version: str
+    deployment: str
+    model: str
     defaults: Dict[str, Any] = Field(default_factory=dict)
+
+class AnthropicProviderConfig(BaseModel):
+    """Configuration for Anthropic provider."""
+    type: Literal["anthropic"]
+    api_key: str
+    model: str
+    defaults: Dict[str, Any] = Field(default_factory=dict)
+
+
+class HuggingFaceProviderConfig(BaseModel):
+    """Configuration for HuggingFace provider."""
+    type: Literal["huggingface"]
+    api_key: str
+    model: str
+    endpoint: Optional[str] = None
+    defaults: Dict[str, Any] = Field(default_factory=dict)
+
+
+# Discriminated union for provider configurations
+ProviderConfig = Annotated[
+    Union[
+        AzureOpenAIProviderConfig,
+        AnthropicProviderConfig,
+        HuggingFaceProviderConfig
+    ],
+    Field(discriminator="type")
+]
 
 
 class AgentConfig(BaseModel):
