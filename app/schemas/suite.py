@@ -31,12 +31,23 @@ class HuggingFaceProviderConfig(BaseModel):
     defaults: Dict[str, Any] = Field(default_factory=dict)
 
 
+class OpenRouterProviderConfig(BaseModel):
+    """Configuration for OpenRouter provider."""
+    type: Literal["openrouter"]
+    api_key: str
+    model: str
+    site_url: Optional[str] = None
+    site_name: Optional[str] = None
+    defaults: Dict[str, Any] = Field(default_factory=dict)
+
+
 # Discriminated union for provider configurations
 ProviderConfig = Annotated[
     Union[
         AzureOpenAIProviderConfig,
         AnthropicProviderConfig,
-        HuggingFaceProviderConfig
+        HuggingFaceProviderConfig,
+        OpenRouterProviderConfig
     ],
     Field(discriminator="type")
 ]
