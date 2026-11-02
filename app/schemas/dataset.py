@@ -8,7 +8,7 @@ class Question(BaseModel):
     """A single question in the dataset."""
     id: str
     prompt: str
-    expected: str
+    expected: Optional[str] = None
     category: Optional[str] = None
     difficulty: Optional[str] = None
 

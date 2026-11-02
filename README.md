@@ -12,7 +12,14 @@ Benchmarker is a Python-based command-line tool that:
 - Generates rich output reports and saves detailed traces  
 - **NEW**: Supports image OCR and handwriting recognition testing
 
-Built with modularity in mind, Benchmarker supports multiple providers, models, scoring strategies, prompt styles, and now **multimodal capabilities** — making it a flexible backbone for comprehensive LLM evaluations.
+Built with modularity in mind, Benchmarker supports multiple providers (Azure OpenAI, Anthropic, HuggingFace, OpenRouter), models, scoring strategies, prompt styles, and now **multimodal capabilities**, making it a flexible backbone for comprehensive LLM evaluations.
+
+## 🤖 Supported Providers
+
+- **Azure OpenAI**: GPT-4, GPT-4 Turbo, GPT-4o and other Azure-hosted models
+- **Anthropic**: Claude 3.5 Sonnet, Claude 3 Opus, Claude 3 Haiku and other Claude models
+- **OpenRouter**: Access to hundreds of models through OpenRouter's unified API
+- **HuggingFace**: Access to thousands of open-source models via HuggingFace Hub
 
 ## 💡 Why?
 
@@ -104,6 +111,76 @@ suite:
       api_key: ${API_KEY}
       deployment: ${DEPLOYMENT}
       model: ${MODEL}
+```
+
+### Alternative: Using Anthropic Claude
+
+Benchmarker also supports Anthropic's Claude models. Here's an example configuration:
+
+```yaml
+suite:
+  name: "Claude Q&A Benchmark"
+  dataset: "data/datasets/simple_qa.yaml"
+  
+  scenarios:
+    - name: "qa_test_claude"
+      strategy: "direct_prompt"
+      provider: "anthropic"
+  
+  scoring:
+    name: "claude_judge"
+    strategy: "llm_judge"
+    provider: "anthropic"
+    max_score: 10
+    prompt: "Rate the answer quality from 0-10..."
+  
+  output:
+    name: "claude_results.json"
+  
+  providers:
+    anthropic:
+      type: anthropic
+      api_key: ${ANTHROPIC_API_KEY}
+      model: claude-3-5-sonnet-20241022
+      defaults:
+        temperature: 0.1
+        max_tokens: 1000
+```
+
+### Alternative: Using HuggingFace Models
+
+Benchmarker also supports HuggingFace models. Here's an example configuration:
+
+```yaml
+suite:
+  name: "HuggingFace Q&A Benchmark"
+  dataset: "data/datasets/simple_qa.yaml"
+  
+  scenarios:
+    - name: "qa_test_deepseek"
+      strategy: "direct_prompt"
+      provider: "huggingface"
+  
+  scoring:
+    name: "hf_judge"
+    strategy: "llm_judge"
+    provider: "huggingface"
+    max_score: 10
+    prompt: "Rate the answer quality from 0-10..."
+  
+  output:
+    name: "hf_results.json"
+  
+  providers:
+    huggingface:
+      type: huggingface
+      api_key: ${HUGGINGFACE_API_KEY}
+      model: deepseek-ai/DeepSeek-R1-0528
+      defaults:
+        temperature: 0.1
+        max_tokens: 512
+        do_sample: false
+        repetition_penalty: 1.03
 ```
 
 ```bash

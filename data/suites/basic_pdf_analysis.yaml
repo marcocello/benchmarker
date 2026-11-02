@@ -10,6 +10,7 @@ suite:
       strategy: "advanced_pdf"
       provider: "azure_openai_gpt_4o_mini"
       prompt_path: "prompts/basic.txt"
+
   output:
     name: result
 

@@ -10,15 +10,7 @@ suite:
       strategy: "direct_prompt"
       provider: "azure_openai_gpt_4o_mini"
     
-    - name: "qa_test_claude_sonnet"
-      strategy: "direct_prompt"
-      provider: "anthropic_claude_3_5"
-    
-    - name: "qa_test_huggingface"
-      strategy: "direct_prompt"
-      provider: "huggingface_mistral_small_3_1"
-    
-    - name: "qa_test_openrouter_gpt4o"
+    - name: "openrouter_kimi"
       strategy: "direct_prompt"
       provider: "openrouter_kimi"
 
@@ -60,16 +52,6 @@ suite:
       api_key: ${AZURE_OPENAI_API_KEY}
       deployment: gpt-4o-mini
       model: gpt-4o-mini
-
-    anthropic_claude_3_5:
-      type: anthropic
-      api_key: ${ANTHROPIC_API_KEY}
-      model: claude-3-5-sonnet-20241022
-
-    huggingface_mistral_small_3_1:
-      type: huggingface
-      api_key: ${HUGGINGFACE_API_KEY}
-      model: mistralai/Mistral-Small-3.1-24B-Instruct-2503
 
     openrouter_kimi:
       type: openrouter

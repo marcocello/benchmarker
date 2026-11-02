@@ -1,17 +1,23 @@
 dataset:
   name: "Simple Q&A Dataset"
   description: "Basic factual questions for capability assessment"
-  version: "1.0"
-  
+  version: "2.0"
+
   questions:
-    - id: "geo_001"
-      prompt: "What is the capital of France?"
-      expected: "Paris"
-      category: "geography"
-      difficulty: "easy"
-      
-    - id: "sci_001"
-      prompt: "What is the chemical symbol for gold?"
-      expected: "Au"
-      category: "science"
-      difficulty: "easy"
+    - id: "geo_002"
+      prompt: "Which European capital city lies at the confluence of the Danube and Sava rivers, and has been the capital of multiple historical empires?"
+
+    - id: "geo_003"
+      prompt: "What is the only country that is also a continent and is entirely surrounded by water?"
+
+    - id: "geo_004"
+      prompt: "Name the landlocked country in South America that shares borders with the most other nations on the continent."
+
+    - id: "sci_002"
+      prompt: "Which subatomic particle has no electric charge and is found in the nucleus of every atom except hydrogen-1?"
+
+    - id: "sci_003"
+      prompt: "What law explains why airplanes can lift off the ground due to pressure differences above and below the wings?"
+
+    - id: "sci_004"
+      prompt: "Which element has the highest electrical conductivity at room temperature, and what is its atomic number?"

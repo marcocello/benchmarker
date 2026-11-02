@@ -325,7 +325,7 @@ class SuiteRunner:
             
             # Execute the strategy with PDF data and additional context
             return await strategy.execute(
-                prompt_to_use, 
+                prompt_to_use,
                 scenario_config=scenario,
                 pdf_path=pdf_task.pdf_path,
                 analysis_criteria=pdf_task.analysis_criteria,
